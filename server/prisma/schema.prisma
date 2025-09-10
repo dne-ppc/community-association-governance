@@ -1,0 +1,184 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  PRESIDENT
+  BOARD_MEMBER
+  COMMITTEE_MEMBER
+  VOLUNTEER
+  PUBLIC
+}
+
+enum DocumentStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  LIVE
+  ARCHIVED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum FieldType {
+  TEXT
+  EMAIL
+  DATE
+  CHECKBOX
+  RADIO
+  SELECT
+  SIGNATURE
+  TEXTAREA
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  role         UserRole @default(VOLUNTEER)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  lastLogin    DateTime?
+
+  // Relations
+  authoredDocuments     Document[]           @relation("DocumentAuthor")
+  approvedDocuments     Document[]           @relation("DocumentApprover")
+  documentVersions      DocumentVersion[]
+  approvalRequests      ApprovalRequest[]    @relation("ApprovalRequester")
+  reviewedApprovals     ApprovalRequest[]    @relation("ApprovalReviewer")
+  activityLogs          ActivityLog[]
+
+  @@map("users")
+}
+
+model DocumentCategory {
+  id                    String   @id @default(cuid())
+  name                  String
+  parentId              String?
+  description           String?
+  requiredApprovalRole  UserRole @default(PRESIDENT)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relations
+  parent                DocumentCategory? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children              DocumentCategory[] @relation("CategoryHierarchy")
+  documents             Document[]
+
+  @@map("document_categories")
+}
+
+model Document {
+  id                String         @id @default(cuid())
+  title             String
+  slug              String         @unique
+  categoryId        String
+  status            DocumentStatus @default(PENDING)
+  contentMarkdown   String
+  isPublic          Boolean        @default(false)
+  hasFillableFields Boolean        @default(false)
+  authorId          String
+  approvedById      String?
+  approvedAt        DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  // Relations
+  author            User              @relation("DocumentAuthor", fields: [authorId], references: [id])
+  approver          User?             @relation("DocumentApprover", fields: [approvedById], references: [id])
+  category          DocumentCategory  @relation(fields: [categoryId], references: [id])
+  versions          DocumentVersion[]
+  approvalRequests  ApprovalRequest[]
+  formFields        FormField[]
+  activityLogs      ActivityLog[]
+
+  @@map("documents")
+}
+
+model DocumentVersion {
+  id                String   @id @default(cuid())
+  documentId        String
+  versionNumber     Int
+  contentMarkdown   String
+  changeDescription String?
+  contentDiff       String?
+  authorId          String
+  createdAt         DateTime @default(now())
+
+  // Relations
+  document          Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  author            User     @relation(fields: [authorId], references: [id])
+
+  @@unique([documentId, versionNumber])
+  @@map("document_versions")
+}
+
+model ApprovalRequest {
+  id          String          @id @default(cuid())
+  documentId  String
+  requestedById String
+  status      ApprovalStatus  @default(PENDING)
+  notes       String?
+  requestedAt DateTime        @default(now())
+  reviewedById String?
+  reviewedAt  DateTime?
+
+  // Relations
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  requester   User     @relation("ApprovalRequester", fields: [requestedById], references: [id])
+  reviewer    User?    @relation("ApprovalReviewer", fields: [reviewedById], references: [id])
+
+  @@map("approval_requests")
+}
+
+model FormField {
+  id            String    @id @default(cuid())
+  documentId    String
+  fieldName     String
+  fieldType     FieldType
+  position      Int
+  required      Boolean   @default(false)
+  placeholderText String?
+  options       String?   // JSON string for select/radio options
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  document      Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("form_fields")
+}
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  userId      String
+  action      String
+  entityType  String
+  entityId    String
+  details     Json?
+  ipAddress   String?
+  timestamp   DateTime @default(now())
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id])
+  document    Document? @relation(fields: [entityId], references: [id])
+
+  @@map("activity_logs")
+}
