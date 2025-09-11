@@ -1,8 +1,8 @@
-# Community Association Governance Document Management System
+# Community Association Document Management System (Django)
 
 A comprehensive web application for managing governance documents for community associations. This system enables document creation, editing, version control, approval workflows, and PDF generation with fillable forms.
 
-## Features
+## 🚀 Features
 
 ### Core Functionality
 - **Document Management**: Create, edit, and organize governance documents with markdown support
@@ -26,36 +26,39 @@ A comprehensive web application for managing governance documents for community 
 - Checklists and appendices
 - Hierarchical categorization system
 
-## Technology Stack
+## 🛠 Technology Stack
 
 ### Backend
-- **Node.js** with Express.js
-- **TypeScript** for type safety
-- **PostgreSQL** with Prisma ORM
+- **Django 4.2** with Django REST Framework
+- **PostgreSQL** database
+- **Redis** for caching and session management
 - **JWT** authentication
-- **Puppeteer** for PDF generation
-- **Redis** for session management
+- **WeasyPrint** and **ReportLab** for PDF generation
+- **Celery** for background tasks
 
 ### Frontend
-- **React** with TypeScript
-- **Material-UI** for consistent design
-- **Zustand** for state management
-- **React Hook Form** for form handling
-- **React Router** for navigation
+- **React 18** with modern JavaScript
+- **Bootstrap 5** for responsive design
+- **Font Awesome** for icons
+- **Axios** for API communication
 
 ### Infrastructure
 - **Docker** containers for deployment
 - **Docker Compose** for local development
-- **Nginx** for reverse proxy (production)
+- **Nginx** for reverse proxy and static file serving
+- **Gunicorn** as WSGI server
 
-## Quick Start
+## 📋 Prerequisites
 
-### Prerequisites
 - Docker and Docker Compose
-- Node.js 18+ (for local development)
 - Git
+- Python 3.11+ (for local development)
+- PostgreSQL 15+ (for local development)
+- Redis 7+ (for local development)
 
-### Installation
+## 🚀 Quick Start
+
+### Using Docker (Recommended)
 
 1. **Clone the repository**
    ```bash
@@ -65,19 +68,17 @@ A comprehensive web application for managing governance documents for community 
 
 2. **Start the application with Docker Compose**
    ```bash
+   # For development
+   docker-compose -f docker-compose.dev.yml up -d
+   
+   # For production
    docker-compose up -d
    ```
 
-3. **Initialize the database**
-   ```bash
-   # The database will be automatically initialized with sample data
-   # Wait for the containers to be ready (about 30-60 seconds)
-   ```
-
-4. **Access the application**
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:3001
-   - Database: localhost:5432
+3. **Access the application**
+   - Frontend: http://localhost:8000
+   - Admin Interface: http://localhost:8000/admin/
+   - API: http://localhost:8000/api/
 
 ### Default Login Credentials
 
@@ -86,19 +87,22 @@ The system comes with pre-configured demo accounts:
 - **Admin**: `admin@community-association.com` / `admin123`
 - **President**: `president@community-association.com` / `president123`
 - **Board Member**: `board@community-association.com` / `board123`
+- **Committee Member**: `committee@community-association.com` / `committee123`
+- **Volunteer**: `volunteer@community-association.com` / `volunteer123`
 
-## Development Setup
+## 🛠 Development Setup
 
-### Backend Development
+### Local Development
 
-1. **Navigate to server directory**
+1. **Create virtual environment**
    ```bash
-   cd server
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
 2. **Install dependencies**
    ```bash
-   npm install
+   pip install -r requirements.txt
    ```
 
 3. **Set up environment variables**
@@ -107,95 +111,127 @@ The system comes with pre-configured demo accounts:
    # Edit .env with your configuration
    ```
 
-4. **Run database migrations**
+4. **Set up database**
    ```bash
-   npm run migrate
+   python manage.py migrate
+   python manage.py create_superuser --email admin@example.com --password admin123
+   python manage.py seed_data
    ```
 
-5. **Seed the database**
+5. **Start development server**
    ```bash
-   npm run seed
+   python manage.py runserver
    ```
 
-6. **Start development server**
-   ```bash
-   npm run dev
-   ```
+### Database Management
 
-### Frontend Development
+```bash
+# Create migrations
+python manage.py makemigrations
 
-1. **Navigate to client directory**
-   ```bash
-   cd client
-   ```
+# Apply migrations
+python manage.py migrate
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+# Create superuser
+python manage.py create_superuser --email admin@example.com --password admin123
 
-3. **Start development server**
-   ```bash
-   npm start
-   ```
+# Seed with sample data
+python manage.py seed_data
 
-## API Documentation
+# Access Django shell
+python manage.py shell
+```
+
+## 📚 API Documentation
 
 ### Authentication Endpoints
-- `POST /api/auth/login` - User login
-- `POST /api/auth/register` - User registration
-- `GET /api/auth/profile` - Get user profile
-- `PUT /api/auth/profile` - Update user profile
-- `PUT /api/auth/change-password` - Change password
+- `POST /api/auth/login/` - User login
+- `POST /api/auth/register/` - User registration
+- `GET /api/auth/profile/` - Get user profile
+- `PUT /api/auth/profile/` - Update user profile
+- `POST /api/auth/change-password/` - Change password
+- `POST /api/auth/logout/` - User logout
 
 ### Document Endpoints
-- `GET /api/documents` - List documents with filtering
-- `POST /api/documents` - Create new document
-- `GET /api/documents/:id` - Get document details
-- `PUT /api/documents/:id` - Update document
-- `DELETE /api/documents/:id` - Delete document
-- `GET /api/documents/:id/versions` - Get document versions
-- `GET /api/documents/:id/diff` - Get version diff
+- `GET /api/documents/` - List documents with filtering
+- `POST /api/documents/` - Create new document
+- `GET /api/documents/{id}/` - Get document details
+- `PUT /api/documents/{id}/` - Update document
+- `DELETE /api/documents/{id}/` - Delete document
+- `GET /api/documents/{id}/versions/` - Get document versions
+- `GET /api/documents/{id}/versions/{v1}/diff/{v2}/` - Get version diff
+- `GET /api/documents/{id}/activity/` - Get document activity log
+- `GET /api/documents/{id}/pdf/` - Generate PDF
+- `GET /api/documents/{id}/pdf/fillable/` - Generate fillable PDF
+- `GET /api/documents/{id}/pdf/preview/` - Preview PDF HTML
+- `GET /api/documents/stats/` - Get document statistics
 
 ### Category Endpoints
-- `GET /api/categories` - List categories
-- `POST /api/categories` - Create category
-- `PUT /api/categories/:id` - Update category
-- `DELETE /api/categories/:id` - Delete category
+- `GET /api/categories/` - List categories
+- `POST /api/categories/` - Create category
+- `GET /api/categories/{id}/` - Get category details
+- `PUT /api/categories/{id}/` - Update category
+- `DELETE /api/categories/{id}/` - Delete category
+- `GET /api/categories/tree/` - Get category tree
+- `GET /api/categories/stats/` - Get category statistics
 
 ### Approval Endpoints
-- `GET /api/approvals` - List approval requests
-- `POST /api/approvals/request` - Request approval
-- `PUT /api/approvals/:id/review` - Review approval
-- `PUT /api/approvals/:id/cancel` - Cancel approval
+- `GET /api/approvals/` - List approval requests
+- `POST /api/approvals/` - Create approval request
+- `GET /api/approvals/{id}/` - Get approval request details
+- `PUT /api/approvals/{id}/` - Review approval request
+- `DELETE /api/approvals/{id}/` - Cancel approval request
+- `POST /api/approvals/request/{document_id}/` - Request approval for document
+- `GET /api/approvals/stats/` - Get approval statistics
 
-### PDF Endpoints
-- `GET /api/pdf/:documentId` - Generate PDF
-- `GET /api/pdf/:documentId/fillable` - Generate fillable PDF
-- `GET /api/pdf/:documentId/preview` - Preview PDF HTML
+### User Management Endpoints
+- `GET /api/users/` - List users (admin only)
+- `POST /api/users/` - Create user (admin only)
+- `GET /api/users/{id}/` - Get user details
+- `PUT /api/users/{id}/` - Update user (admin only)
+- `DELETE /api/users/{id}/` - Delete user (admin only)
+- `GET /api/users/stats/` - Get user statistics (admin only)
 
-## Database Schema
+## 🗄 Database Schema
 
-### Core Tables
-- `users` - User accounts and roles
-- `documents` - Document metadata and content
-- `document_versions` - Version history with diffs
-- `document_categories` - Hierarchical categorization
-- `approval_requests` - Approval workflow tracking
-- `form_fields` - Fillable form field definitions
-- `activity_logs` - Complete audit trail
+### Core Models
+- **User**: User accounts with role-based permissions
+- **DocumentCategory**: Hierarchical document categorization
+- **Document**: Document metadata and content
+- **DocumentVersion**: Version history with diffs
+- **FormField**: Fillable form field definitions
+- **ApprovalRequest**: Approval workflow tracking
+- **ActivityLog**: Complete audit trail
 
-## Security Features
+### Relationships
+- Users can create multiple documents
+- Documents belong to categories
+- Documents have multiple versions
+- Documents can have form fields
+- Documents can have approval requests
+- All actions are logged in ActivityLog
+
+## 🔐 Security Features
 
 - **JWT Authentication** with secure token management
 - **Role-based Access Control** with granular permissions
-- **Input Validation** using Joi schemas
-- **SQL Injection Protection** via Prisma ORM
-- **XSS Protection** with helmet middleware
+- **Input Validation** using Django serializers
+- **SQL Injection Protection** via Django ORM
+- **XSS Protection** with Django's built-in security
 - **CORS Configuration** for secure cross-origin requests
-- **Password Hashing** using bcrypt with salt rounds
+- **Password Hashing** using Django's built-in password hashing
+- **Rate Limiting** via Nginx
+- **Security Headers** via Nginx configuration
 
-## Deployment
+## 📊 Monitoring and Logging
+
+- **Request Logging**: All API requests are logged
+- **Activity Logging**: User actions are tracked
+- **Error Logging**: Application errors are logged
+- **Health Checks**: Docker health checks for all services
+- **Performance Monitoring**: Request timing and response codes
+
+## 🚀 Deployment
 
 ### Production Deployment
 
@@ -207,7 +243,7 @@ The system comes with pre-configured demo accounts:
 
 2. **Build and deploy**
    ```bash
-   docker-compose -f docker-compose.prod.yml up -d
+   docker-compose up -d
    ```
 
 3. **Set up reverse proxy** (Nginx example)
@@ -217,37 +253,54 @@ The system comes with pre-configured demo accounts:
        server_name your-domain.com;
        
        location / {
-           proxy_pass http://localhost:3000;
-       }
-       
-       location /api {
-           proxy_pass http://localhost:3001;
+           proxy_pass http://localhost:8000;
        }
    }
    ```
 
 ### Environment Variables
 
-#### Backend (.env)
+#### Production (.env)
 ```env
-DATABASE_URL="postgresql://user:password@localhost:5432/community_dms"
-REDIS_URL="redis://localhost:6379"
-JWT_SECRET="your-super-secret-jwt-key"
-JWT_EXPIRES_IN="7d"
-PORT=3001
-NODE_ENV="production"
-SMTP_HOST="your-smtp-host"
-SMTP_PORT=587
-SMTP_USER="your-smtp-user"
-SMTP_PASS="your-smtp-password"
+DEBUG=False
+SECRET_KEY=your-super-secret-key-here
+DATABASE_URL=postgresql://user:password@localhost:5432/community_dms
+REDIS_URL=redis://localhost:6379/0
+JWT_SECRET=your-jwt-secret-here
+ALLOWED_HOSTS=your-domain.com,www.your-domain.com
+CORS_ALLOWED_ORIGINS=https://your-domain.com
+EMAIL_HOST=your-smtp-host
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your-smtp-user
+EMAIL_HOST_PASSWORD=your-smtp-password
+DEFAULT_FROM_EMAIL=noreply@your-domain.com
 ```
 
-#### Frontend (.env)
+#### Development (.env)
 ```env
-REACT_APP_API_URL="https://your-api-domain.com/api"
+DEBUG=True
+SECRET_KEY=dev-secret-key-not-for-production
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/community_dms_dev
+REDIS_URL=redis://localhost:6379/0
+JWT_SECRET=dev-jwt-secret-not-for-production
+ALLOWED_HOSTS=localhost,127.0.0.1
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 ```
 
-## Contributing
+## 🧪 Testing
+
+```bash
+# Run tests
+python manage.py test
+
+# Run tests with coverage
+coverage run --source='.' manage.py test
+coverage report
+coverage html
+```
+
+## 📝 Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -255,18 +308,18 @@ REACT_APP_API_URL="https://your-api-domain.com/api"
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## License
+## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Support
+## 🆘 Support
 
 For support and questions:
 - Create an issue in the GitHub repository
 - Contact the development team
 - Check the documentation wiki
 
-## Roadmap
+## 🗺 Roadmap
 
 ### Planned Features
 - **Advanced Approval Workflows**: Multi-stage approvals with conditional logic
@@ -277,9 +330,78 @@ For support and questions:
 - **Workflow Automation**: Automated document workflows and notifications
 - **Template Engine**: Advanced document template system
 - **Audit Reports**: Comprehensive reporting and analytics
+- **Email Notifications**: Automated email notifications for approvals
+- **Document Templates**: Pre-built document templates
+- **Bulk Operations**: Bulk document operations
+- **Advanced Permissions**: Fine-grained permission system
 
 ### Version History
 - **v1.0.0** - Initial release with core functionality
 - **v1.1.0** - Enhanced approval workflows (planned)
 - **v1.2.0** - Mobile application (planned)
 - **v2.0.0** - Advanced collaboration features (planned)
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+1. **Database Connection Issues**
+   ```bash
+   # Check if PostgreSQL is running
+   docker-compose ps
+   
+   # Check database logs
+   docker-compose logs db
+   ```
+
+2. **Static Files Not Loading**
+   ```bash
+   # Collect static files
+   python manage.py collectstatic --noinput
+   ```
+
+3. **Permission Issues**
+   ```bash
+   # Check file permissions
+   ls -la
+   
+   # Fix permissions
+   chmod -R 755 static/
+   chmod -R 755 media/
+   ```
+
+4. **Redis Connection Issues**
+   ```bash
+   # Check Redis status
+   docker-compose logs redis
+   
+   # Test Redis connection
+   redis-cli ping
+   ```
+
+### Performance Optimization
+
+1. **Database Optimization**
+   - Use database indexes
+   - Optimize queries with select_related and prefetch_related
+   - Use database connection pooling
+
+2. **Caching**
+   - Enable Redis caching
+   - Use Django's cache framework
+   - Cache expensive operations
+
+3. **Static Files**
+   - Use CDN for static files
+   - Enable gzip compression
+   - Set proper cache headers
+
+## 📞 Contact
+
+For questions or support, please contact:
+- Email: support@community-association.com
+- GitHub Issues: [Create an issue](https://github.com/your-repo/issues)
+
+---
+
+**Community Association Document Management System** - Built with Django and React
