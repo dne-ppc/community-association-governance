@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: community_dms
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  django:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      SECRET_KEY: django-insecure-change-this-in-production-key-123456789
+      DEBUG: "True"
+      ALLOWED_HOSTS: localhost,127.0.0.1,0.0.0.0,django
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/community_dms
+      DB_NAME: community_dms
+      DB_USER: postgres
+      DB_PASSWORD: password
+      DB_HOST: postgres
+      DB_PORT: 5432
+      REDIS_URL: redis://redis:6379
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      JWT_SECRET_KEY: your-super-secret-jwt-key-change-in-production
+      CORS_ALLOWED_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    command: >
+      sh -c "
+        python manage.py migrate &&
+        python manage.py seed_users &&
+        python manage.py seed_documents &&
+        python manage.py runserver 0.0.0.0:8000
+      "
+
+  celery:
+    build: .
+    environment:
+      SECRET_KEY: django-insecure-change-this-in-production-key-123456789
+      DEBUG: "False"
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/community_dms
+      DB_NAME: community_dms
+      DB_USER: postgres
+      DB_PASSWORD: password
+      DB_HOST: postgres
+      DB_PORT: 5432
+      REDIS_URL: redis://redis:6379
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    depends_on:
+      - postgres
+      - redis
+      - django
+    volumes:
+      - .:/app
+    command: celery -A community_dms worker -l info
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:

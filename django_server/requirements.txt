@@ -1,0 +1,37 @@
+# Core Django dependencies
+Django==5.2.6
+djangorestframework==3.16.1
+django-cors-headers==4.8.0
+django-filter==25.1
+django-extensions==4.1
+djangorestframework-simplejwt==5.5.1
+
+# Database
+psycopg2-binary==2.9.10
+
+# Redis and Caching
+redis==6.4.0
+celery==5.5.3
+
+# Authentication and Security
+PyJWT==2.10.1
+
+# Document Processing
+markdown2==2.5.4
+diff-match-patch==20241021
+Pillow==11.3.0
+
+# PDF Generation
+reportlab==4.4.3
+pypdf2==3.0.1
+
+# Server
+gunicorn==23.0.0
+whitenoise==6.10.0
+
+# Development
+python-dotenv==1.1.1
+ipython==9.5.0
+
+# Additional utilities
+python-dateutil==2.9.0.post0
