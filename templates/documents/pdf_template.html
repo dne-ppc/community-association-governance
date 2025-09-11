@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ document.title }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1in;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.4;
+            color: #333;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            font-size: 18pt;
+            margin-bottom: 20pt;
+            text-align: center;
+        }
+        
+        h2 {
+            color: #34495e;
+            font-size: 14pt;
+            margin-top: 16pt;
+            margin-bottom: 8pt;
+        }
+        
+        h3 {
+            color: #34495e;
+            font-size: 12pt;
+            margin-top: 12pt;
+            margin-bottom: 6pt;
+        }
+        
+        p {
+            margin-bottom: 6pt;
+        }
+        
+        .metadata {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10pt;
+            margin-bottom: 20pt;
+        }
+        
+        .metadata table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .metadata td {
+            padding: 4pt;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .metadata td:first-child {
+            font-weight: bold;
+            background-color: #e9ecef;
+            width: 30%;
+        }
+        
+        .form-field {
+            margin-bottom: 8pt;
+            padding: 4pt;
+            border-bottom: 1px dotted #ccc;
+        }
+        
+        .required {
+            color: #dc3545;
+        }
+        
+        .content {
+            margin-top: 20pt;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{ document.title }}</h1>
+    
+    <div class="metadata">
+        <table>
+            <tr>
+                <td>Category:</td>
+                <td>{{ document.category.name }}</td>
+            </tr>
+            <tr>
+                <td>Author:</td>
+                <td>{{ document.author.full_name }}</td>
+            </tr>
+            <tr>
+                <td>Created:</td>
+                <td>{{ document.created_at|date:"F d, Y H:i" }}</td>
+            </tr>
+            <tr>
+                <td>Status:</td>
+                <td>{{ document.status }}</td>
+            </tr>
+            {% if document.approved_by %}
+            <tr>
+                <td>Approved by:</td>
+                <td>{{ document.approved_by.full_name }}</td>
+            </tr>
+            <tr>
+                <td>Approved at:</td>
+                <td>{{ document.approved_at|date:"F d, Y H:i" }}</td>
+            </tr>
+            {% endif %}
+        </table>
+    </div>
+    
+    {% if document.has_fillable_fields and document.form_fields.exists %}
+    <h2>Form Fields</h2>
+    {% for field in document.form_fields.all %}
+    <div class="form-field">
+        <strong>{{ field.field_name }}:</strong> 
+        {% if field.required %}<span class="required">(Required)</span>{% endif %}
+        <br>
+        <span style="border-bottom: 1px solid #000; display: inline-block; width: 200px;">&nbsp;</span>
+    </div>
+    {% endfor %}
+    {% endif %}
+    
+    <div class="content">
+        {{ content_html|safe }}
+    </div>
+</body>
+</html>
